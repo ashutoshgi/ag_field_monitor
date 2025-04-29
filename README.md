@@ -27,8 +27,6 @@ git clone https://github.com/ashutoshgi/ag_field_monitor.git
 cd ag_field_monitor
 
 # 2. Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate
 
 # 3. Install dependencies
 pip install -r requirements.txt
@@ -36,49 +34,24 @@ pip install -r requirements.txt
 
 # Windows
 
-```cmd
-REM 1. Clone the repository
+Open Windows command line and do the following:
+
+1. Clone the repository
 git clone https://github.com/ashutoshgi/ag_field_monitor.git
 cd ag_field_monitor
 
-REM 2. Create and activate virtual environment
-python -m venv krishna
-krishna\Scripts\activate
+2. Create and activate virtual environment
 
-REM 3. Install dependencies
+
+3. Install dependencies
 pip install -r requirements.txt
 ```
 
-
 #Earth Engine Authentication
 
-Before running the app for the first time:
+Before running the app for the first time, the app requires Google Earth Engine account authentication. 
 
-```bash
-python app.py
-```
-
-If you see:
-```
-Earth Engine not authenticated. Attempting inline authentication...
-```
-
-Follow these steps:
-1. A URL will appear — open it in your browser
-2. Sign in to your Google Earth Engine account
-3. Copy the generated token and paste it into the terminal when prompted
-
-This is a **one-time setup** per machine.
-
-If the browser method fails (e.g., on Windows with firewalls), run in Python:
-
-```python
-import ee
-ee.Authenticate(auth_mode='notebook')
-ee.Initialize()
-```
-
-Then rerun `app.py`.
+Once authenticated, run python app.py in terminal, and the app will be running in localhost.
 
 
 # Acknowledgements
