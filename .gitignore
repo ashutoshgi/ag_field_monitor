@@ -1,0 +1,11 @@
+# macOS junk files
+.DS_Store
+__MACOSX/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Ignore uploaded user files
+uploads/*
+

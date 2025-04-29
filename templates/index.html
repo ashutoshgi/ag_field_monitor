@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Satellite Data Analysis</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+
+    <!-- Leaflet Control Geocoder CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+
+    <!-- Leaflet Draw JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <!-- Leaflet Control Geocoder JS -->
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Sidebar styling */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 220px;
+            height: 100%;
+            background-color: #333;
+            padding-top: 20px;
+            z-index: 1000;
+        }
+
+        .sidebar a {
+            padding: 10px 15px;
+            text-align: left; /* Change this to left */
+            font-size: 18px;
+            color: white;
+            display: block;
+            text-decoration: none;
+        }
+
+        .sidebar a:hover {
+            background-color: #575757;
+        }
+
+
+        .sidebar h4 {
+            text-align: left; /* Left-align the heading */
+            padding-left: 15px; /* Optional: Add some padding to the left */
+        }
+
+        .sidebar .upload-section {
+            padding: 15px;
+            color: white;
+            margin-top: 30px;
+        }
+
+        .sidebar .upload-section button {
+            background-color: #333; /* Sidebar background color */
+            color: white; /* Text color */
+            border: none; /* Remove default border */
+        }
+
+        .sidebar .upload-section button:hover {
+            background-color: #575757; /* Slightly lighter color for hover effect */
+        }
+
+        /* Content styling to ensure it does not overlap with the sidebar */
+        .container {
+            margin-left: 240px; /* Adjust this value based on the width of your sidebar */
+            margin-top: 20px;
+        }
+
+        /* Map styling */
+        #map1, #map2 {
+            height: 600px;
+            width: 48%;
+        }
+
+        #compare-btns {
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            margin-top: 15px;
+        }
+
+        /* Adjusted layout for side by side display of maps */
+        .map-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .map-section {
+            display: flex;
+            flex: 1;
+        }
+
+        /* Buttons placed beside the maps */
+        .button-section {
+            flex: 0 0 25%;
+            margin-left: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Time series charts moved below maps */
+        .chart-section {
+            margin-top: 20px;
+        }
+
+        .date-section {
+            display: flex;
+            justify-content: space-between;
+            width: 70%;
+            margin-left: 10px;
+            margin-bottom: 20px;
+        }
+
+        .legend {
+            background-color: white;
+            padding: 10px;
+            line-height: 18px;
+            font-size: 14px;
+            border: 1px solid black;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.8;
+        }
+
+        h1 {
+            margin-left: 140px; /* Adjust this value as needed */
+            color: maroon; /* Texas Climate Smart Initiative */
+        }
+
+        h3 {
+            margin-left: 10px; /* Adjust this value as needed */
+            color: blue; /* Monitoring, Measurement, Reporting, and Verification tool */
+        }
+
+        /* Responsive handling for smaller screens */
+        @media (max-width: 992px) {
+            .map-section, .button-section {
+                flex-direction: column;
+                flex: 0 0 100%;
+                margin-left: 0;
+            }
+
+            .map-section {
+                margin-bottom: 20px;
+            }
+
+            #map1, #map2 {
+                width: 100%;
+            }
+
+            /* Adjust sidebar for smaller screens */
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .container {
+                margin-left: 0;
+            }
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="sidebar">
+    <h4 class="text-white">MMRV Dashboard</h4>
+    <a href="#">Home</a>
+    <a href="#">Reports</a>
+    <a href="#">Account Settings</a>
+    <a href="#">Logout</a>
+
+    <!-- File Upload Section in Sidebar -->
+    <div class="upload-section">
+        <h5>Upload Field Boundary</h5>
+        <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" id="file-input" name="file" accept=".geojson,.kml,.kmz" class="form-control">
+            <button type="button" class="btn btn-primary mt-2" id="upload-file-btn">Upload File</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <h1>Texas Climate Smart Initiative</h1>
+    <h3>Monitoring Measurement Reporting and Verification (MMRV) tool</h3>
+
+    <!-- Date selection -->
+    <div class="date-section">
+        <div>
+            <label for="startDate1">Start Date 1:</label>
+            <input type="date" id="startDate1" class="form-control" value="2022-01-01">
+        </div>
+        <div>
+            <label for="endDate1">End Date 1:</label>
+            <input type="date" id="endDate1" class="form-control" value="2022-12-31">
+        </div>
+        <div>
+            <label for="startDate2">Start Date 2:</label>
+            <input type="date" id="startDate2" class="form-control" value="2023-01-01">
+        </div>
+        <div>
+            <label for="endDate2">End Date 2:</label>
+            <input type="date" id="endDate2" class="form-control" value="2023-12-31">
+        </div>
+    </div>
+
+    <!-- Map comparison -->
+    <div class="map-container">
+        <div class="map-section">
+            <div id="map1"></div>
+            <div id="map2"></div>
+        </div>
+
+        <!-- Buttons for comparison -->
+        <div class="button-section" id="compare-btns">
+            <button class="btn btn-success" id="compare-ndvi">Vegetation index</button>
+            <button class="btn btn-primary" id="compare-rvi">Radar vegetation index</button>
+            <button class="btn btn-info" id="compare-ndwi">Water index</button>
+            <button class="btn btn-warning" id="compare-savi">Soil index</button>
+            <button class="btn btn-danger mt-2" id="clear-aoi-btn">Clear AOI</button>
+        </div>
+    </div>
+
+    <!-- Time series charts section -->
+    <div class="chart-section">
+        <div id="time-series-section-ndvi" style="display:none;">
+            <canvas id="ndviChart"></canvas>
+        </div>
+        <div id="time-series-section-rvi" style="display:none;">
+            <canvas id="rviChart"></canvas>
+        </div>
+        <div id="time-series-section-ndwi" style="display:none;">
+            <canvas id="ndwiChart"></canvas>
+        </div>
+        <div id="time-series-section-savi" style="display:none;">
+            <canvas id="saviChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" id="progress-bar"></div>
+    </div>
+
+    <!-- Display comparison results -->
+    <div id="results" class="mt-4">
+        <h2>Comparison Results</h2>
+        <p>Select a time range and compare the maps to see results here.</p>
+    </div>
+</div>
+
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+<script>
+    let map1, map2, drawnItems, aoi;
+    let progressBar = $('#progress-bar');
+
+    function initializeMap() {
+        map1 = L.map('map1').setView([31.9686, -99.9018], 5);
+        map2 = L.map('map2').setView([31.9686, -99.9018], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map1);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map2);
+
+        drawnItems = new L.FeatureGroup();
+        map1.addLayer(drawnItems);
+        map1.addControl(new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems
+            }
+        }));
+
+        map1.on(L.Draw.Event.CREATED, function (event) {
+            let layer = event.layer;
+            drawnItems.addLayer(layer);
+            aoi = layer.toGeoJSON();
+            syncMaps(map1, map2);
+        });
+
+        var geocoder1 = L.Control.geocoder().addTo(map1);
+        var geocoder2 = L.Control.geocoder().addTo(map2);
+
+        L.control.scale().addTo(map1);
+        L.control.scale().addTo(map2);
+    }
+
+    function syncMaps(map1, map2) {
+        map2.setView(map1.getCenter(), map1.getZoom());
+    }
+
+    function startProgressBar() {
+        progressBar.css('width', '0%');
+        progressBar.addClass('progress-bar-striped progress-bar-animated');
+        let progress = 0;
+        let interval = setInterval(function () {
+            if (progress >= 100) {
+                clearInterval(interval);
+            } else {
+                progress += 10;
+                progressBar.css('width', progress + '%');
+            }
+        }, 300);
+    }
+
+    function stopProgressBar() {
+        progressBar.css('width', '100%');
+        progressBar.removeClass('progress-bar-striped progress-bar-animated');
+    }
+
+    function compareIndices(url, start1, end1, start2, end2, chartId, label) {
+        if (!aoi) {
+            alert("Please draw an AOI on the first map.");
+            return;
+        }
+
+        let requestData = {
+            aoi: aoi,
+            start1: start1,
+            end1: end1,
+            start2: start2,
+            end2: end2
+        };
+
+        startProgressBar();
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(requestData),
+            success: function (response) {
+                stopProgressBar();
+                console.log("Map and Time Series data received: ", response);
+                showResultsOnMaps(response);
+                displayTimeSeries(response.timeSeriesDates, response.timeSeriesValues, chartId, label);
+            },
+            error: function (error) {
+                stopProgressBar();
+                console.error("Error fetching data: ", error);
+                alert("Error: " + error.responseJSON.message);
+            }
+        });
+    }
+
+    function showResultsOnMaps(response) {
+        let tileUrl1 = response.tile_url1;
+        let tileUrl2 = response.tile_url2;
+
+        if (tileUrl1 && tileUrl2) {
+            L.tileLayer(tileUrl1).addTo(map1);
+            L.tileLayer(tileUrl2).addTo(map2);
+
+            $('#results').html(`
+                <h4>${response.message}</h4>
+                <p>Stats 1: ${JSON.stringify(response.stats1)}</p>
+                <p>Stats 2: ${JSON.stringify(response.stats2)}</p>
+            `);
+
+            // Create a legend
+            createLegend(response.vis_params, map1);
+            createLegend(response.vis_params, map2);
+        } else {
+            console.error("Tile URLs not available for map display");
+            alert('Could not retrieve the tile URLs.');
+        }
+    }
+
+    function createLegend(visParams, map) {
+        if (!visParams || !visParams.palette || !visParams.min || !visParams.max) {
+            console.error("visParams not available:", visParams);
+            return;
+        }
+
+        if (map.legendControl) {
+            map.removeControl(map.legendControl);
+        }
+
+        let legend = L.control({ position: 'bottomright' });
+
+        legend.onAdd = function (map) {
+            let div = L.DomUtil.create('div', 'info legend');
+            let labels = [];
+            let palette = visParams.palette;
+            let minVal = visParams.min.toFixed(2);
+            let maxVal = visParams.max.toFixed(2);
+            let range = maxVal - minVal;
+
+            let steps = palette.length;
+            let stepSize = range / (steps - 1);
+            for (let i = 0; i < steps; i++) {
+                let value = (parseFloat(minVal) + i * stepSize).toFixed(2);
+                labels.push(`<i style="background:${palette[i]}"></i> ${value}`);
+            }
+
+            div.innerHTML = labels.join('<br>');
+            return div;
+        };
+
+        legend.addTo(map);
+        map.legendControl = legend;
+    }
+
+    function displayTimeSeries(timeSeriesDates, timeSeriesValues, chartId, label) {
+        if (timeSeriesDates && timeSeriesDates.length > 0) {
+            document.getElementById(chartId).parentNode.style.display = 'block';
+
+            let existingChart = Chart.getChart(chartId);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            let ctx = document.getElementById(chartId).getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timeSeriesDates,
+                    datasets: [{
+                        label: label,
+                        data: timeSeriesValues,
+                        borderColor: 'green',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: `${label} Time Series`
+                    },
+                    scales: {
+                        xAxes: [{
+                            type: 'time',
+                            time: {
+                                unit: 'month'
+                            },
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Date'
+                            }
+                        }],
+                        yAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: label
+                            }
+                        }]
+                    }
+                }
+            });
+        } else {
+            console.error("No time series data to display");
+        }
+    }
+
+    $('#compare-ndvi').click(function () {
+        compareIndices('/compare_ndvi', $('#startDate1').val(), $('#endDate1').val(), $('#startDate2').val(), $('#endDate2').val(), 'ndviChart', 'NDVI');
+    });
+
+    $('#compare-rvi').click(function () {
+        compareIndices('/compare_rvi', $('#startDate1').val(), $('#endDate1').val(), $('#startDate2').val(), $('#endDate2').val(), 'rviChart', 'RVI');
+    });
+
+    $('#compare-ndwi').click(function () {
+        compareIndices('/compare_ndwi', $('#startDate1').val(), $('#endDate1').val(), $('#startDate2').val(), $('#endDate2').val(), 'ndwiChart', 'NDWI');
+    });
+
+    $('#compare-savi').click(function () {
+        compareIndices('/compare_savi', $('#startDate1').val(), $('#endDate1').val(), $('#startDate2').val(), $('#endDate2').val(), 'saviChart', 'SAVI');
+    });
+
+    $('#upload-file-btn').click(function () {
+        let formData = new FormData($('#upload-form')[0]);
+        $.ajax({
+            url: '/upload',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                alert(response.message);
+                if (response.aoi) {
+                    aoi = response.aoi;
+                    let bounds = L.geoJSON(aoi).getBounds();
+                    map1.fitBounds(bounds);
+                    map2.fitBounds(bounds);
+                }
+            },
+            error: function (error) {
+                alert("Error uploading file: " + error.responseJSON.message);
+            }
+        });
+    });
+
+    $('#clear-aoi-btn').click(function () {
+        $.ajax({
+            url: '/clear_aoi',
+            type: 'POST',
+            success: function (response) {
+                alert(response.message);
+                aoi = null;
+                drawnItems.clearLayers();
+
+                map1.eachLayer(function (layer) {
+                    if (layer instanceof L.TileLayer && layer.options.attribution !== '© OpenStreetMap') {
+                        map1.removeLayer(layer);
+                    }
+                });
+                map2.eachLayer(function (layer) {
+                    if (layer instanceof L.TileLayer && layer.options.attribution !== '© OpenStreetMap') {
+                        map2.removeLayer(layer);
+                    }
+                });
+
+                ['ndviChart', 'rviChart', 'ndwiChart', 'saviChart'].forEach(chartId => {
+                    document.getElementById(chartId).parentNode.style.display = 'none';
+                    let ctx = document.getElementById(chartId).getContext('2d');
+                    if (ctx) {
+                        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    }
+                });
+
+                $('#results').html(`
+                    <h3>Comparison Results</h3>
+                    <p>Select a time range and compare the maps to see results here.</p>
+                `);
+
+                if (map1.legendControl) {
+                    map1.removeControl(map1.legendControl);
+                    map1.legendControl = null;
+                }
+
+                if (map2.legendControl) {
+                    map2.removeControl(map2.legendControl);
+                    map2.legendControl = null;
+                }
+            },
+            error: function (error) {
+                alert("Error clearing AOI: " + error.responseJSON.message);
+            }
+        });
+    });
+
+    $(document).ready(function () {
+        initializeMap();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+flask
+earthengine-api
+geemap
+pandas
+geopandas
+shapely
+folium
+setuptools
+
+
