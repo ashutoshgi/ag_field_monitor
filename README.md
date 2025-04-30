@@ -2,7 +2,7 @@
 Web based toolbox for monitoring agricultural fields using satellite remote sensing datasets
 # Web application for real time agricultural field monitoring using satellite remote sensing datasets
 
-A cross-platform Flask-based web application to analyze satellite-derived vegetation indices (NDVI, SAVI, NDWI) and radar-based RVI using Google Earth Engine. Designed for agricultural monitoring under the MMRV (Multi-Mission Remote Vegetation) framework.
+A web application to process and analyze satellite remote sensing data for agricultural fields. The application helps visualization and generation of vegetation, water and soil indices from Sentinel-2 (multi-spectral) and Sentinel-1 (SAR) datasets. data processing is done over Google Earth Engine. 
 
 ## Usage
 
